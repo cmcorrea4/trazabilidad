@@ -26,7 +26,7 @@ for field in fields:
             time_data[field].append(record.get_time())
             data[field].append(record.get_value())
 
-serie_time = pd.Series(time_data)
+serie_time = pd.Series(time_data[field])
 serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_convert('America/Bogota')   #tz_convert('America/Bogota')
 index_time=serie_tim
 index_time_s=index_time.strftime('%Y-%m-%d %H:%M:%S')
