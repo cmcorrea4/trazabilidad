@@ -34,9 +34,9 @@ def consulta_(option):
    #cr_date = datetime.datetime.strptime(cr_date, '%Y-%m-%d %H:%M:%S')
   
    
-   index_time_s=datetime.index_time.strptime('%Y-%m-%d %H:%M:%S')        
+   #index_time_s=datetime.index_time.strptime('%Y-%m-%d %H:%M:%S')        
  
-   var_serie = pd.Series(var_s,index_time_s)
+   var_serie = pd.Series(var_s,index_time)
    #var_serie=var_serie.to_period('S')
    var_serie.describe()
    var=var_serie.reset_index(level=0)
