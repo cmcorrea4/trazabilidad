@@ -40,3 +40,16 @@ df_time_data = pd.DataFrame(index_time_s, columns=["Time_data"])
 df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado, df_time_data], axis=1)
 st.dataframe(df_consulta)
 
+estado_seleccionado = st.selectbox('Selecciona un estado:', df['Estado'].unique())
+
+# Filtrar el DataFrame por el estado seleccionado
+filtered_df = df[df['Estado'] == estado_seleccionado]
+
+# Mostrar el DataFrame resultante cuando se presiona el botón
+if st.button('Filtrar'):
+    st.write("DataFrame filtrado:")
+    st.write(filtered_df)
+
+
+
+
