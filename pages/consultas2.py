@@ -30,7 +30,10 @@ df_Orden = pd.DataFrame(data["Orden"], columns=["Orden"])
 df_Proceso = pd.DataFrame(data["Proceso"], columns=["Proceso"])
 df_Estado = pd.DataFrame(data["Estado"], columns=["Estado"])
 
-df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado], axis=1)
+time_data = {'time_data': [time.time() + i for i in range(3)]}
+df_time_data = pd.DataFrame(time_data, columns=["time_data"])
+
+df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado, df_time_data], axis=1)
 st.dataframe(df_consulta)
 
 
