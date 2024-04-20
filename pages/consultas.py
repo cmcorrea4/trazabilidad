@@ -46,7 +46,7 @@ orden_seleccionado = st.selectbox('Selecciona una Orden:', df_consulta['Orden'].
 filtered_df = df_consulta[df_consulta['Orden'] == orden_seleccionado]
 
 # Mostrar el DataFrame resultante cuando se presiona el botón
-if st.button('Consultat'):
+if st.button('Consultar'):
     st.write("DataFrame filtrado:")
     st.write(filtered_df)
 
