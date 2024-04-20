@@ -31,7 +31,7 @@ def consulta_(option):
           var_s.append(record.get_value())
 
    serie_time = pd.Series(time_s_)
-   serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_convert('America/Bogota')
+   serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_localize    #tz_convert('America/Bogota')
    index_time=serie_tim
    index_time_s=index_time.strftime('%Y-%m-%d %H:%M:%S')        
  
