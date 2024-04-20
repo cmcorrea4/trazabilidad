@@ -41,5 +41,6 @@ df_time_data["time_data"] = pd.to_datetime(df_time_data["time_data"], unit="s")
 
 df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado, df_time_data], axis=1)
 st.dataframe(df_consulta)
+st.write(index_time_s)
 
 
