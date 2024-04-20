@@ -46,6 +46,16 @@ estado_seleccionado = st.selectbox('Selecciona un estado:', ('Recibido', 'En Pro
 filtered_df = df_consulta[df_consulta['Estado'] == estado_seleccionado]
 
 # Mostrar el DataFrame resultante cuando se presiona el botón
+#if st.button('Filtrar'):
+#    st.write("DataFrame filtrado:")
+#    st.write(filtered_df)
+
+orden_seleccionado = st.selectbox('Selecciona una Orden:', df['Orden'].unique())
+
+# Filtrar el DataFrame por el estado seleccionado
+filtered_df = df_consulta[df_consulta['Orden'] == orden_seleccionado]
+
+# Mostrar el DataFrame resultante cuando se presiona el botón
 if st.button('Filtrar'):
     st.write("DataFrame filtrado:")
     st.write(filtered_df)
