@@ -33,7 +33,8 @@ def consulta_(option):
    #serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).pytz.timezone('America/Bogota')   #tz_convert('America/Bogota')
    #index_time=serie_tim
                   #cr_date = datetime.datetime.strptime(cr_date, '%Y-%m-%d %H:%M:%S')
-   st.write(   serie_time)
+   st.write(serie_time)
+   st.write(var_s)
    
    #index_time_s=index_time.strptime('%Y-%m-%d %H:%M:%S')        
  
