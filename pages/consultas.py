@@ -32,17 +32,17 @@ def consulta_(option):
    serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_localize    #tz_convert('America/Bogota')
    index_time=serie_tim
    #cr_date = datetime.datetime.strptime(cr_date, '%Y-%m-%d %H:%M:%S')
-  
+   st.write(index_time)
    
-   #index_time_s=datetime.index_time.strptime('%Y-%m-%d %H:%M:%S')        
+   #index_time_s=index_time.strptime('%Y-%m-%d %H:%M:%S')        
  
-   var_serie = pd.Series(var_s,index_time)
-   #var_serie=var_serie.to_period('S')
-   var_serie.describe()
-   var=var_serie.reset_index(level=0)
-   #var.rename(columns = {'index':'Date', '0':prod}, inplace = True)
-   var.columns=['Fecha','Orden']
-   st.write(var)
+   #var_serie = pd.Series(var_s,index_time)
+                                               #var_serie=var_serie.to_period('S')
+   #var_serie.describe()
+   #var=var_serie.reset_index(level=0)
+                                             #var.rename(columns = {'index':'Date', '0':prod}, inplace = True)
+   #var.columns=['Fecha','Orden']
+   #st.write(var)
    
 
 st.subheader ('Consulta de Productos')   
