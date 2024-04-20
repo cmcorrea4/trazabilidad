@@ -1,7 +1,5 @@
 import streamlit as st
 from PIL import Image
-from datetime import datetime
-
 import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
 import time
@@ -33,7 +31,10 @@ def consulta_(option):
    serie_time = pd.Series(time_s_)
    serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_localize    #tz_convert('America/Bogota')
    index_time=serie_tim
-   index_time_s=index_time.strptime('%Y-%m-%d %H:%M:%S')        
+   #cr_date = datetime.datetime.strptime(cr_date, '%Y-%m-%d %H:%M:%S')
+  
+   
+   index_time_s=datetime.index_time.strptime('%Y-%m-%d %H:%M:%S')        
  
    var_serie = pd.Series(var_s,index_time_s)
    #var_serie=var_serie.to_period('S')
