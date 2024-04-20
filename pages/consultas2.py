@@ -39,6 +39,4 @@ df_time_data = pd.DataFrame(index_time_s, columns=["Time_data"])
 
 df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado, df_time_data], axis=1)
 st.dataframe(df_consulta)
-st.write(index_time_s)
-
 
