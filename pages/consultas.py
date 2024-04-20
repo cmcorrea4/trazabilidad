@@ -1,4 +1,16 @@
 import streamlit as st
+from PIL import Image
+from datetime import datetime
+
+import influxdb_client
+from influxdb_client.client.write_api import SYNCHRONOUS
+import time
+import json
+from datetime import datetime
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
+import pandas as pd
+from datetime import datetime
 def consulta_(option):
    
    time_c=1
