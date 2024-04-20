@@ -43,7 +43,7 @@ st.dataframe(df_consulta)
 estado_seleccionado = st.selectbox('Selecciona un estado:', ('Recibido', 'En Proceso', 'Terminado'))
 
 # Filtrar el DataFrame por el estado seleccionado
-filtered_df = df[df['Estado'] == estado_seleccionado]
+filtered_df = df_consulta[df_consulta['Estado'] == estado_seleccionado]
 
 # Mostrar el DataFrame resultante cuando se presiona el botón
 if st.button('Filtrar'):
