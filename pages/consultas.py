@@ -30,28 +30,25 @@ def consulta_(option):
           var_s.append(record.get_value())
 
    serie_time = pd.Series(time_s_)
-   #serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).pytz.timezone('America/Bogota')   #tz_convert('America/Bogota')
-   #index_time=serie_tim
-                  #cr_date = datetime.datetime.strptime(cr_date, '%Y-%m-%d %H:%M:%S')
-   st.write(serie_time)
-   st.write(var_s)
-   
-   #index_time_s=index_time.strptime('%Y-%m-%d %H:%M:%S')        
+   serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).pytz.timezone('America/Bogota')   #tz_convert('America/Bogota')
+   index_time=serie_tim
+   index_time_s=index_time.strftime('%Y-%m-%d %H:%M:%S')
+         
  
-   #var_serie = pd.Series(var_s,index_time)
-                                               #var_serie=var_serie.to_period('S')
-   #var_serie.describe()
-   #var=var_serie.reset_index(level=0)
+   var_serie = pd.Series(var_s,index_time)
+                                               
+   var_serie.describe()
+   var=var_serie.reset_index(level=0)
                                              #var.rename(columns = {'index':'Date', '0':prod}, inplace = True)
-   #var.columns=['Fecha','Orden']
-   #st.write(var)
+   var.columns=['Fecha',var1]
+   st.write(var)
    
 
 st.subheader ('Consulta de Productos')   
 
 var1 = st.radio(
     "Selecciona orden",
-    ('1234', '4567','8910','Orden'))
+    ('Orden','Proceso','Estado'))
 
 
 if st.button('Consulta'):
