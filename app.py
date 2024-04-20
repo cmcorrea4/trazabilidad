@@ -16,7 +16,7 @@ from datetime import datetime
 
 
 st.title('Sierras Y Equipos')
-st.subheader('Registro de Proceso')
+st.subheader('Registro de Proceso, Estación 1.')
 
 orden_t = st.selectbox(
     'Selecciona la Orden',
