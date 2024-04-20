@@ -41,7 +41,7 @@ def consulta_(option):
    var=var_serie.reset_index(level=0)
    #var.rename(columns = {'index':'Date', '0':prod}, inplace = True)
    var.columns=['Fecha','Orden']
-   var
+   st.write(var)
    
 
 st.subheader ('Consulta de Productos')   
