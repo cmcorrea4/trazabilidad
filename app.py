@@ -19,7 +19,7 @@ st.title('Sierras Y Equipos')
 st.subheader('Registro de Proceso')
 
 orden_t = st.selectbox(
-    'Selecciona el proceso',
+    'Selecciona la Orden',
     ('1234', '4567', '8910'),key=1)
 
 
@@ -28,7 +28,7 @@ proceso = st.selectbox(
     ('Proceso 1', 'Proceso 2', 'Proceso 3'),key=2)
 
 estado=st.selectbox(
-    'Selecciona el proceso',
+    'Selecciona el Estado',
     ('Recibido', 'En Proceso', 'Terminado'),key=3)
 
 
