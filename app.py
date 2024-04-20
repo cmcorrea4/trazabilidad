@@ -27,7 +27,7 @@ proceso = st.selectbox(
     'Selecciona el proceso',
     ('Proceso 1', 'Proceso 2', 'Proceso 3'),key=2)
 
-Estado=st.selectbox(
+estado=st.selectbox(
     'Selecciona el proceso',
     ('Recibido', 'En Proceso', 'Terminado'),key=3)
 
@@ -42,11 +42,11 @@ url="https://eu-central-1-1.aws.cloud2.influxdata.com"
 if st.button('Registrar'):
    client = influxdb_client.InfluxDBClient(url=url,token=token,org=org)
    write_api = client.write_api(write_options=SYNCHRONOUS)
-   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Orden", "Terminado")
+   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Orden", orden)
    write_api.write(bucket=bucket, org=org, record=p)
-   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Proceso", "Terminado")
+   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Proceso", proceso)
    write_api.write(bucket=bucket, org=org, record=p)
-   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Estado", "Terminado")
+   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Estado", estado)
    write_api.write(bucket=bucket, org=org, record=p)
   
 
