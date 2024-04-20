@@ -9,6 +9,7 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import pandas as pd
 from datetime import datetime
+import pytz
 def consulta_(option):
    
    time_c=1
@@ -29,7 +30,7 @@ def consulta_(option):
           var_s.append(record.get_value())
 
    serie_time = pd.Series(time_s_)
-   serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_localize    #tz_convert('America/Bogota')
+   serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).pytz.timezone('America/Bogota')   #tz_convert('America/Bogota')
    index_time=serie_tim
    #cr_date = datetime.datetime.strptime(cr_date, '%Y-%m-%d %H:%M:%S')
    st.write(index_time)
