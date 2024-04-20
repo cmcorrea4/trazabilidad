@@ -40,7 +40,7 @@ df_time_data = pd.DataFrame(index_time_s, columns=["Time_data"])
 df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado, df_time_data], axis=1)
 st.dataframe(df_consulta)
 
-estado_seleccionado = st.selectbox('Selecciona un estado:', df['Estado'].unique())
+estado_seleccionado = st.selectbox('Selecciona un estado:', ('Recibido', 'En Proceso', 'Terminado'))
 
 # Filtrar el DataFrame por el estado seleccionado
 filtered_df = df[df['Estado'] == estado_seleccionado]
