@@ -32,6 +32,7 @@ df_Estado = pd.DataFrame(data["Estado"], columns=["Estado"])
 
 time_data = {'time_data': [time.time() + i for i in range(3)]}
 df_time_data = pd.DataFrame(time_data, columns=["time_data"])
+df_time_data["time_data"] = pd.to_datetime(df_time_data["time_data"], unit="s")
 
 df_consulta = pd.concat([df_Orden, df_Proceso, df_Estado, df_time_data], axis=1)
 st.dataframe(df_consulta)
