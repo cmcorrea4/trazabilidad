@@ -42,7 +42,7 @@ url="https://eu-central-1-1.aws.cloud2.influxdata.com"
 if st.button('Registrar'):
    client = influxdb_client.InfluxDBClient(url=url,token=token,org=org)
    write_api = client.write_api(write_options=SYNCHRONOUS)
-   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Orden", orden)
+   p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Orden", orden_t)
    write_api.write(bucket=bucket, org=org, record=p)
    p = influxdb_client.Point("Trazabilidad").tag("location", "Estación 1").field("Proceso", proceso)
    write_api.write(bucket=bucket, org=org, record=p)
