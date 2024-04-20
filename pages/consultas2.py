@@ -5,6 +5,7 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import pandas as pd
 from datetime import datetime
+import streamlit as st
 
 
 time_c=1
