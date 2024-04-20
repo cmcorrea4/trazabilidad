@@ -7,8 +7,9 @@ import pandas as pd
 from datetime import datetime
 import streamlit as st
 
+st.title(" Consulta de Estación 1, 24 Horas")
 
-time_c=1
+time_c=24
 token = "VmIHuN_GB8AhmOchqnjtgrOL-oD2pHU-2ypKcswWbtM6aY1G2ylRYOJQpsqEANVl9iZ5PdAGqTsOJ30NPCtPUQ=="
 org = "cmcorrea4@gmail.com"
 bucket = "Elec_var"
