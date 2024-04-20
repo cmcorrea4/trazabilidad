@@ -51,7 +51,7 @@ st.subheader ('Consulta de Productos')
 
 var1 = st.radio(
     "Selecciona orden",
-    ('1234', '4567','8910','orden'))
+    ('1234', '4567','8910','Orden'))
 
 
 if st.button('Consulta'):
