@@ -50,7 +50,7 @@ filtered_df = df_consulta[df_consulta['Estado'] == estado_seleccionado]
 #    st.write("DataFrame filtrado:")
 #    st.write(filtered_df)
 
-orden_seleccionado = st.selectbox('Selecciona una Orden:', df['Orden'].unique())
+orden_seleccionado = st.selectbox('Selecciona una Orden:', df_consulta['Orden'].unique())
 
 # Filtrar el DataFrame por el estado seleccionado
 filtered_df = df_consulta[df_consulta['Orden'] == orden_seleccionado]
