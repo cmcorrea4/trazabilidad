@@ -33,7 +33,7 @@ def consulta_(option):
    serie_time = pd.Series(time_s_)
    serie_tim=pd.DatetimeIndex(pd.to_datetime(serie_time,unit='s')).tz_localize    #tz_convert('America/Bogota')
    index_time=serie_tim
-   #index_time_s=index_time.strptime('%Y-%m-%d %H:%M:%S')        
+   index_time_s=index_time.strptime('%Y-%m-%d %H:%M:%S')        
  
    var_serie = pd.Series(var_s,index_time_s)
    #var_serie=var_serie.to_period('S')
