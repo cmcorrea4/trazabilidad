@@ -55,7 +55,7 @@ try:
      st.write("DataFrame filtrado:")
      st.write(filtered_df)
 except:
-    pass
+ st.write(" No hay registros dentro del tiempo definido.")
 
 
 
