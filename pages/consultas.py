@@ -5,11 +5,6 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import pandas as pd
 import streamlit as st
-import plotly.express as px
-import plotly.graph_objects as go
-
-# Configuración de la página
-st.set_page_config(page_title="Sistema de Gestión Avícola - Consultas", layout="wide")
 
 # Título y cabecera
 st.title("Sistema de Gestión Avícola")
@@ -25,43 +20,39 @@ url = "https://eu-central-1-1.aws.cloud2.influxdata.com"
 client_Inf = InfluxDBClient(url=url, token=token, org=org, verify_ssl=False)
 
 # Opciones de consulta
-col1, col2 = st.columns(2)
+tiempo_consulta = st.slider('Selecciona el período de consulta (días)', 1, 90, 30)
 
-with col1:
-    # Rango de tiempo para la consulta
-    tiempo_consulta = st.slider('Selecciona el período de consulta (días)', 1, 90, 30)
-    
-    # Opciones de filtrado
-    tipo_consulta = st.radio(
-        "Tipo de consulta:",
-        ["Todos los lotes", "Lote específico"]
-    )
+# Opciones de filtrado
+tipo_consulta = st.radio(
+    "Tipo de consulta:",
+    ["Todos los lotes", "Lote específico"]
+)
 
-with col2:
-    if tipo_consulta == "Lote específico":
-        # Primero consultamos los lotes disponibles
-        try:
-            query_lotes = f'from(bucket: "{bucket}")' \
-                          f'|> range(start: -{tiempo_consulta}d)' \
-                          f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
-                          f'|> group(columns: ["lote"])' \
-                          f'|> distinct(column: "lote")'
-            
-            tablas_lotes = client_Inf.query_api().query(query_lotes, org)
-            lotes_disponibles = []
-            
-            for tabla in tablas_lotes:
-                for record in tabla.records:
-                    lotes_disponibles.append(record.values.get("lote"))
-            
-            if lotes_disponibles:
-                lote_seleccionado = st.selectbox('Selecciona un lote:', lotes_disponibles)
-            else:
-                st.warning("No se encontraron lotes en el período seleccionado.")
-                lote_seleccionado = None
-        except Exception as e:
-            st.error(f"Error al consultar lotes: {e}")
+# Si se selecciona lote específico, mostrar selector de lotes
+if tipo_consulta == "Lote específico":
+    # Primero consultamos los lotes disponibles
+    try:
+        query_lotes = f'from(bucket: "{bucket}")' \
+                      f'|> range(start: -{tiempo_consulta}d)' \
+                      f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
+                      f'|> group(columns: ["lote"])' \
+                      f'|> distinct(column: "lote")'
+        
+        tablas_lotes = client_Inf.query_api().query(query_lotes, org)
+        lotes_disponibles = []
+        
+        for tabla in tablas_lotes:
+            for record in tabla.records:
+                lotes_disponibles.append(record.values.get("lote"))
+        
+        if lotes_disponibles:
+            lote_seleccionado = st.selectbox('Selecciona un lote:', lotes_disponibles)
+        else:
+            st.warning("No se encontraron lotes en el período seleccionado.")
             lote_seleccionado = None
+    except Exception as e:
+        st.error(f"Error al consultar lotes: {e}")
+        lote_seleccionado = None
 
 # Campos a consultar
 campos_avicolas = [
@@ -73,19 +64,19 @@ campos_avicolas = [
     "Consumo_por_ave", "Total_huevos", "Retiro_aves"
 ]
 
-# Función para realizar consulta a InfluxDB
-def consultar_datos(tiempo_dias, lote=None):
+# Botón para realizar la consulta
+if st.button('Consultar Datos'):
     datos = {campo: [] for campo in campos_avicolas}
     datos["Timestamp"] = []  # Para almacenar los timestamps
     
     try:
         # Crear el filtro de lote si es necesario
-        filtro_lote = f'|> filter(fn: (r) => r.lote == "{lote}")' if lote else ""
+        filtro_lote = f'|> filter(fn: (r) => r.lote == "{lote_seleccionado}")' if tipo_consulta == "Lote específico" and lote_seleccionado else ""
         
         # Consultar cada campo
         for campo in campos_avicolas:
             query = f'from(bucket: "{bucket}")' \
-                    f'|> range(start: -{tiempo_dias}d)' \
+                    f'|> range(start: -{tiempo_consulta}d)' \
                     f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
                     f'|> filter(fn: (r) => r._field == "{campo}")' \
                     f'{filtro_lote}' \
@@ -105,140 +96,80 @@ def consultar_datos(tiempo_dias, lote=None):
                         datos["Timestamp"].append(tiempo)
         
         # Crear DataFrame
-        df = pd.DataFrame(datos)
+        df_resultado = pd.DataFrame(datos)
         
-        # Si no hay datos, retornar DataFrame vacío
-        if df.empty:
-            return pd.DataFrame()
-        
-        return df
+        # Si no hay datos, mostrar mensaje
+        if df_resultado.empty:
+            st.warning("No se encontraron datos para los criterios seleccionados.")
+        else:
+            # Formatear el DataFrame para mostrar
+            df_display = df_resultado.copy()
+            
+            # Convertir timestamp a formato legible
+            if "Timestamp" in df_display.columns:
+                df_display["Fecha"] = df_display["Timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')
+                df_display = df_display.drop("Timestamp", axis=1)
+            
+            # Título de resultados
+            if tipo_consulta == "Lote específico" and lote_seleccionado:
+                st.subheader(f"Datos del lote: {lote_seleccionado}")
+            else:
+                st.subheader("Datos de todos los lotes")
+            
+            # Mostrar tabla de datos
+            st.dataframe(df_display)
+            
+            # Exportar a CSV
+            csv = df_display.to_csv(index=False)
+            st.download_button(
+                label="Descargar datos como CSV",
+                data=csv,
+                file_name=f"datos_avicolas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+            )
+            
+            # Visualizaciones básicas usando Streamlit
+            st.subheader("Visualizaciones")
+            
+            # Gráfico de producción de huevos
+            categorias_huevos = ["Huevos_yumbo", "Huevos_extra", "Huevos_aa", "Huevos_a", 
+                               "Huevos_b", "Huevos_c", "Huevos_pipo", "Huevos_sucios", 
+                               "Huevos_toteados", "Yemas"]
+            
+            df_huevos = df_resultado[["Timestamp"] + [col for col in categorias_huevos if col in df_resultado.columns]]
+            df_huevos = df_huevos.set_index("Timestamp")
+            
+            st.line_chart(df_huevos)
+            st.caption("Producción de Huevos por Categoría")
+            
+            # Gráfico de mortalidad y descarte
+            categorias_mortalidad = ["Mortalidad", "Aves_descartadas_seleccion", 
+                                   "Aves_descartadas_venta", "Retiro_aves"]
+            
+            df_mortalidad = df_resultado[["Timestamp"] + [col for col in categorias_mortalidad if col in df_resultado.columns]]
+            df_mortalidad = df_mortalidad.set_index("Timestamp")
+            
+            st.line_chart(df_mortalidad)
+            st.caption("Mortalidad y Descarte de Aves")
+            
+            # Gráfico de consumo
+            if "Consumo_concentrado" in df_resultado.columns:
+                df_consumo = df_resultado[["Timestamp", "Consumo_concentrado"]]
+                df_consumo = df_consumo.set_index("Timestamp")
+                
+                st.line_chart(df_consumo)
+                st.caption("Consumo de Concentrado (kg)")
+            
+            # Consumo por ave (si existe)
+            if "Consumo_por_ave" in df_resultado.columns:
+                df_consumo_ave = df_resultado[["Timestamp", "Consumo_por_ave"]]
+                df_consumo_ave = df_consumo_ave.set_index("Timestamp")
+                
+                st.line_chart(df_consumo_ave)
+                st.caption("Consumo por Ave (kg)")
     
     except Exception as e:
         st.error(f"Error al consultar datos: {str(e)}")
-        return pd.DataFrame()
-
-# Botón para realizar la consulta
-if st.button('Consultar Datos'):
-    with st.spinner('Consultando datos...'):
-        if tipo_consulta == "Lote específico" and lote_seleccionado:
-            df_resultado = consultar_datos(tiempo_consulta, lote_seleccionado)
-            titulo_consulta = f"Datos del lote: {lote_seleccionado}"
-        else:
-            df_resultado = consultar_datos(tiempo_consulta)
-            titulo_consulta = "Datos de todos los lotes"
-    
-    # Mostrar resultados
-    if not df_resultado.empty:
-        st.subheader(titulo_consulta)
-        
-        # Formatear el DataFrame para mostrar
-        df_display = df_resultado.copy()
-        
-        # Convertir timestamp a formato legible
-        if "Timestamp" in df_display.columns:
-            df_display["Fecha"] = df_display["Timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')
-            df_display = df_display.drop("Timestamp", axis=1)
-        
-        # Mostrar tabla de datos
-        st.dataframe(df_display)
-        
-        # Exportar a CSV
-        csv = df_display.to_csv(index=False)
-        st.download_button(
-            label="Descargar datos como CSV",
-            data=csv,
-            file_name=f"datos_avicolas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
-        )
-        
-        # Visualizaciones
-        st.subheader("Visualizaciones")
-        
-        # Gráfico de producción de huevos
-        fig_huevos = go.Figure()
-        categorias_huevos = ["Huevos_yumbo", "Huevos_extra", "Huevos_aa", "Huevos_a", 
-                           "Huevos_b", "Huevos_c", "Huevos_pipo", "Huevos_sucios", 
-                           "Huevos_toteados", "Yemas"]
-        
-        for categoria in categorias_huevos:
-            if categoria in df_resultado.columns:
-                fig_huevos.add_trace(go.Scatter(
-                    x=df_resultado["Timestamp"],
-                    y=df_resultado[categoria],
-                    mode='lines+markers',
-                    name=categoria.replace("_", " ")
-                ))
-        
-        fig_huevos.update_layout(
-            title="Producción de Huevos por Categoría",
-            xaxis_title="Fecha",
-            yaxis_title="Cantidad",
-            legend_title="Categoría",
-            height=500
-        )
-        
-        st.plotly_chart(fig_huevos, use_container_width=True)
-        
-        # Gráfico de mortalidad y descarte
-        fig_mortalidad = go.Figure()
-        categorias_mortalidad = ["Mortalidad", "Aves_descartadas_seleccion", 
-                               "Aves_descartadas_venta", "Retiro_aves"]
-        
-        for categoria in categorias_mortalidad:
-            if categoria in df_resultado.columns:
-                fig_mortalidad.add_trace(go.Scatter(
-                    x=df_resultado["Timestamp"],
-                    y=df_resultado[categoria],
-                    mode='lines+markers',
-                    name=categoria.replace("_", " ")
-                ))
-        
-        fig_mortalidad.update_layout(
-            title="Mortalidad y Descarte de Aves",
-            xaxis_title="Fecha",
-            yaxis_title="Cantidad",
-            legend_title="Categoría",
-            height=400
-        )
-        
-        st.plotly_chart(fig_mortalidad, use_container_width=True)
-        
-        # Gráfico de consumo
-        if "Consumo_concentrado" in df_resultado.columns and "Consumo_por_ave" in df_resultado.columns:
-            fig_consumo = go.Figure()
-            
-            fig_consumo.add_trace(go.Scatter(
-                x=df_resultado["Timestamp"],
-                y=df_resultado["Consumo_concentrado"],
-                mode='lines+markers',
-                name='Consumo total (kg)',
-                yaxis='y'
-            ))
-            
-            fig_consumo.add_trace(go.Scatter(
-                x=df_resultado["Timestamp"],
-                y=df_resultado["Consumo_por_ave"],
-                mode='lines+markers',
-                name='Consumo por ave (kg)',
-                yaxis='y2'
-            ))
-            
-            fig_consumo.update_layout(
-                title="Consumo de Concentrado",
-                xaxis_title="Fecha",
-                yaxis_title="Consumo Total (kg)",
-                yaxis2=dict(
-                    title="Consumo por Ave (kg)",
-                    overlaying='y',
-                    side='right'
-                ),
-                legend_title="Medida",
-                height=400
-            )
-            
-            st.plotly_chart(fig_consumo, use_container_width=True)
-    else:
-        st.warning("No se encontraron datos para los criterios seleccionados.")
 else:
     st.info("Presiona el botón 'Consultar Datos' para ver la información.")
 
