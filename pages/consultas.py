@@ -22,177 +22,106 @@ client_Inf = InfluxDBClient(url=url, token=token, org=org, verify_ssl=False)
 # Opciones de consulta
 tiempo_consulta = st.slider('Selecciona el período de consulta (días)', 1, 90, 30)
 
-# Opciones de filtrado
-tipo_consulta = st.radio(
-    "Tipo de consulta:",
-    ["Todos los lotes", "Lote específico"]
-)
-
-# Si se selecciona lote específico, mostrar selector de lotes
-lote_seleccionado = None
-if tipo_consulta == "Lote específico":
-    # Primero consultamos los lotes disponibles
-    try:
-        query_lotes = f'from(bucket: "{bucket}")' \
-                      f'|> range(start: -{tiempo_consulta}d)' \
-                      f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
-                      f'|> group(columns: ["lote"])' \
-                      f'|> distinct(column: "lote")'
-        
-        tablas_lotes = client_Inf.query_api().query(query_lotes, org)
-        lotes_disponibles = []
-        
-        for tabla in tablas_lotes:
-            for record in tabla.records:
-                lotes_disponibles.append(record.values.get("lote"))
-        
-        if lotes_disponibles:
-            lote_seleccionado = st.selectbox('Selecciona un lote:', lotes_disponibles)
-        else:
-            st.warning("No se encontraron lotes en el período seleccionado.")
-    except Exception as e:
-        st.error(f"Error al consultar lotes: {e}")
-
-# Campos a consultar
-campos_avicolas = [
-    "Lote", "Consumo_concentrado", "Mortalidad", 
-    "Aves_descartadas_seleccion", "Aves_descartadas_venta",
-    "Huevos_yumbo", "Huevos_extra", "Huevos_aa", "Huevos_a", 
-    "Huevos_b", "Huevos_c", "Huevos_pipo", "Huevos_sucios", 
-    "Huevos_toteados", "Yemas", "Observaciones", 
-    "Consumo_por_ave", "Total_huevos", "Retiro_aves"
-]
+# Modificamos para adaptarnos a la estructura existente
+st.subheader("Consulta de Estación 1.")
 
 # Botón para realizar la consulta
 if st.button('Consultar Datos'):
     try:
-        # Modificamos el enfoque para consultar primero todos los tiempos disponibles
-        # y luego rellenar los datos para cada campo en esos tiempos
+        # Utilizamos el enfoque del código original, pero adaptado a los campos avícolas
+        # Definimos los campos que queremos consultar
+        fields = ["Lote", "Consumo_concentrado", "Mortalidad", "Total_huevos"]
         
-        # Crear el filtro de lote si es necesario
-        filtro_lote = f'|> filter(fn: (r) => r.lote == "{lote_seleccionado}")' if tipo_consulta == "Lote específico" and lote_seleccionado else ""
+        # Crear diccionarios para almacenar datos y tiempos
+        data = {field: [] for field in fields}
+        time_data = {field: [] for field in fields}
         
-        # Primero, obtener todos los tiempos únicos para crear un DataFrame base
-        query_tiempo = f'from(bucket: "{bucket}")' \
-                       f'|> range(start: -{tiempo_consulta}d)' \
-                       f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
-                       f'{filtro_lote}' \
-                       f'|> group()' \
-                       f'|> distinct(column: "_time")' \
-                       f'|> sort(columns: ["_time"], desc: false)'
+        # Consultar cada campo
+        for field in fields:
+            query = f'from(bucket: "{bucket}")|> range(start: -{tiempo_consulta}d)|> filter(fn: (r) => r._field == "{field}" )'
+            tables = client_Inf.query_api().query(query, org)
+            
+            for table in tables:
+                for record in table.records:
+                    time_data[field].append(record.get_time())
+                    data[field].append(record.get_value())
         
-        tables_tiempo = client_Inf.query_api().query(query_tiempo, org)
-        tiempos = []
-        
-        for table in tables_tiempo:
-            for record in table.records:
-                tiempos.append(record.get_time())
-        
-        # Si no hay tiempos disponibles, mostrar un mensaje y salir
-        if not tiempos:
-            st.warning("No se encontraron datos para los criterios seleccionados.")
+        # Verificar si se obtuvieron datos
+        if all(len(data[field]) == 0 for field in fields):
+            st.warning("No se encontraron datos para el período seleccionado.")
         else:
-            # Crear un DataFrame vacío con todos los tiempos
-            df_resultado = pd.DataFrame({'Timestamp': tiempos})
+            # Procesamos los datos para cada campo que tenga información
+            dataframes = []
             
-            # Para cada campo, obtener los valores correspondientes a cada tiempo
-            for campo in campos_avicolas:
-                query_campo = f'from(bucket: "{bucket}")' \
-                              f'|> range(start: -{tiempo_consulta}d)' \
-                              f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
-                              f'|> filter(fn: (r) => r._field == "{campo}")' \
-                              f'{filtro_lote}' \
-                              f'|> sort(columns: ["_time"], desc: false)'
+            for field in fields:
+                if len(data[field]) > 0:
+                    # Convertir tiempos a zona horaria local
+                    serie_time = pd.Series(time_data[field])
+                    serie_tim = pd.DatetimeIndex(pd.to_datetime(serie_time, unit='ns')).tz_convert('America/Bogota')
+                    index_time = serie_tim
+                    index_time_s = index_time.strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    # Crear DataFrame para este campo
+                    df_field = pd.DataFrame(data[field], columns=[field])
+                    df_time = pd.DataFrame(index_time_s, columns=["Time_data"])
+                    
+                    # Concatenar
+                    df_combined = pd.concat([df_field, df_time], axis=1)
+                    dataframes.append(df_combined)
+            
+            # Si tenemos al menos un DataFrame, mostramos los datos
+            if dataframes:
+                # Si tenemos más de un DataFrame, los juntamos
+                if len(dataframes) > 1:
+                    # Intentamos combinar los DataFrames que tienen la misma longitud
+                    df_result = dataframes[0]
+                    for i in range(1, len(dataframes)):
+                        if len(dataframes[i]) == len(df_result):
+                            df_result = pd.concat([df_result, dataframes[i].drop('Time_data', axis=1, errors='ignore')], axis=1)
+                else:
+                    df_result = dataframes[0]
                 
-                tables_campo = client_Inf.query_api().query(query_campo, org)
+                # Mostrar el DataFrame resultante
+                st.dataframe(df_result)
                 
-                # Crear un diccionario que mapee tiempo a valor para este campo
-                valores_por_tiempo = {}
-                for table in tables_campo:
-                    for record in table.records:
-                        valores_por_tiempo[record.get_time()] = record.get_value()
+                # Permitir seleccionar un lote (si existe la columna)
+                if 'Lote' in df_result.columns and len(df_result['Lote'].dropna().unique()) > 0:
+                    lote_seleccionado = st.selectbox('Selecciona un Lote:', df_result['Lote'].dropna().unique())
+                    
+                    # Filtrar por lote seleccionado
+                    filtered_df = df_result[df_result['Lote'] == lote_seleccionado]
+                    
+                    # Mostrar resultados filtrados
+                    if st.button('Filtrar por Lote'):
+                        st.write("Datos filtrados por lote:")
+                        st.dataframe(filtered_df)
+                        
+                        # Gráficos para datos numéricos
+                        numerical_cols = filtered_df.select_dtypes(include=['number']).columns
+                        
+                        for col in numerical_cols:
+                            if col != 'Lote' and len(filtered_df[col].dropna()) > 0:
+                                # Crear DataFrame temporal para gráfico
+                                df_chart = pd.DataFrame({
+                                    'Fecha': pd.to_datetime(filtered_df['Time_data']),
+                                    col: filtered_df[col]
+                                })
+                                df_chart = df_chart.set_index('Fecha')
+                                
+                                # Mostrar gráfico
+                                st.subheader(f"Gráfico de {col}")
+                                st.line_chart(df_chart)
                 
-                # Rellenar el DataFrame con los valores para este campo
-                # Si no hay valor para un tiempo específico, se rellena con None
-                df_resultado[campo] = df_resultado['Timestamp'].map(
-                    lambda t: valores_por_tiempo.get(t, None)
+                # Exportar a CSV
+                csv = df_result.to_csv(index=False)
+                st.download_button(
+                    label="Descargar datos como CSV",
+                    data=csv,
+                    file_name=f"datos_avicolas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv",
                 )
-            
-            # Formatear el DataFrame para mostrar
-            df_display = df_resultado.copy()
-            
-            # Convertir timestamp a formato legible
-            df_display["Fecha"] = df_display["Timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')
-            df_display = df_display.drop("Timestamp", axis=1)
-            
-            # Título de resultados
-            if tipo_consulta == "Lote específico" and lote_seleccionado:
-                st.subheader(f"Datos del lote: {lote_seleccionado}")
             else:
-                st.subheader("Datos de todos los lotes")
-            
-            # Mostrar tabla de datos
-            st.dataframe(df_display)
-            
-            # Exportar a CSV
-            csv = df_display.to_csv(index=False)
-            st.download_button(
-                label="Descargar datos como CSV",
-                data=csv,
-                file_name=f"datos_avicolas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv",
-            )
-            
-            # Visualizaciones básicas usando Streamlit
-            st.subheader("Visualizaciones")
-            
-            # Preparar datos para gráficos (eliminando campos no numéricos y estableciendo el índice de tiempo)
-            df_grafico = df_resultado.copy()
-            
-            # Filtrar solo columnas numéricas para gráficos
-            columnas_numericas = df_grafico.select_dtypes(include=['number']).columns.tolist()
-            
-            # Gráfico de producción de huevos (si hay datos disponibles)
-            categorias_huevos = [col for col in ["Huevos_yumbo", "Huevos_extra", "Huevos_aa", 
-                                              "Huevos_a", "Huevos_b", "Huevos_c", 
-                                              "Huevos_pipo", "Huevos_sucios", 
-                                              "Huevos_toteados", "Yemas"]
-                              if col in columnas_numericas]
-            
-            if categorias_huevos:
-                df_huevos = df_grafico[["Timestamp"] + categorias_huevos].copy()
-                df_huevos = df_huevos.set_index("Timestamp")
-                
-                st.line_chart(df_huevos)
-                st.caption("Producción de Huevos por Categoría")
-            
-            # Gráfico de mortalidad y descarte (si hay datos disponibles)
-            categorias_mortalidad = [col for col in ["Mortalidad", "Aves_descartadas_seleccion", 
-                                                 "Aves_descartadas_venta", "Retiro_aves"]
-                                  if col in columnas_numericas]
-            
-            if categorias_mortalidad:
-                df_mortalidad = df_grafico[["Timestamp"] + categorias_mortalidad].copy()
-                df_mortalidad = df_mortalidad.set_index("Timestamp")
-                
-                st.line_chart(df_mortalidad)
-                st.caption("Mortalidad y Descarte de Aves")
-            
-            # Gráfico de consumo (si hay datos disponibles)
-            if "Consumo_concentrado" in columnas_numericas:
-                df_consumo = df_grafico[["Timestamp", "Consumo_concentrado"]].copy()
-                df_consumo = df_consumo.set_index("Timestamp")
-                
-                st.line_chart(df_consumo)
-                st.caption("Consumo de Concentrado (kg)")
-            
-            # Consumo por ave (si hay datos disponibles)
-            if "Consumo_por_ave" in columnas_numericas:
-                df_consumo_ave = df_grafico[["Timestamp", "Consumo_por_ave"]].copy()
-                df_consumo_ave = df_consumo_ave.set_index("Timestamp")
-                
-                st.line_chart(df_consumo_ave)
-                st.caption("Consumo por Ave (kg)")
+                st.warning("No se pudieron procesar los datos obtenidos.")
     
     except Exception as e:
         st.error(f"Error al consultar datos: {str(e)}")
@@ -202,4 +131,3 @@ else:
 # Añadir información adicional
 st.markdown("---")
 st.write("Esta aplicación consulta datos de producción avícola desde InfluxDB.")
-st.write("Para registrar nuevos datos, utilice la aplicación de registro correspondiente.")
