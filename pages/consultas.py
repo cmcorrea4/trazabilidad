@@ -21,10 +21,13 @@ client_Inf = InfluxDBClient(url=url, token=token, org=org, verify_ssl=False)
 
 # Opciones de consulta
 st.subheader("Consulta de Estación 1.")
-tiempo_consulta = st.slider('Selecciona las Horas de Consulta', 1, 24, 8)
+tiempo_consulta = st.slider('Selecciona el período de consulta (días)', 1, 90, 30)
 
 # Campos a consultar
-campos = ["Lote", "Consumo_concentrado", "Mortalidad", "Total_huevos"]
+campos = ["Lote", "Consumo_concentrado", "Mortalidad", "Total_huevos", 
+        "Huevos_yumbo", "Huevos_extra", "Huevos_aa", "Huevos_a", 
+        "Huevos_b", "Huevos_c", "Huevos_pipo", "Huevos_sucios", 
+        "Huevos_toteados", "Yemas"]
 
 # Botón para realizar la consulta
 if st.button('Consultar Datos'):
@@ -35,7 +38,7 @@ if st.button('Consultar Datos'):
     try:
         # Consultar cada campo
         for campo in campos:
-            query = f'from(bucket: "{bucket}")|> range(start: -{tiempo_consulta}h)|> filter(fn: (r) => r._field == "{campo}" )'
+            query = f'from(bucket: "{bucket}")|> range(start: -{tiempo_consulta}d)|> filter(fn: (r) => r._field == "{campo}" )'
             tables = client_Inf.query_api().query(query, org)
             
             for table in tables:
@@ -113,13 +116,27 @@ if st.button('Consultar Datos'):
                                 }, index=filtered_df['Fecha'])
                                 st.line_chart(chart_data)
                             
-                            # Gráfico de Total Huevos
-                            if 'Total_huevos' in filtered_df.columns and len(filtered_df['Total_huevos']) > 0:
-                                st.subheader("Total de Huevos")
-                                chart_data = pd.DataFrame({
-                                    'Total Huevos': filtered_df['Total_huevos'].values
-                                }, index=filtered_df['Fecha'])
-                                st.line_chart(chart_data)
+                            # Gráfico de Total Huevos y tipos de huevos
+                            st.subheader("Producción de Huevos")
+                            
+                            # Identificar todas las columnas de huevos
+                            tipos_huevos = ['Total_huevos', 'Huevos_yumbo', 'Huevos_extra', 'Huevos_aa', 
+                                           'Huevos_a', 'Huevos_b', 'Huevos_c', 'Huevos_pipo', 
+                                           'Huevos_sucios', 'Huevos_toteados', 'Yemas']
+                            
+                            # Filtrar solo las columnas que existen en el DataFrame
+                            columnas_huevos = [col for col in tipos_huevos if col in filtered_df.columns]
+                            
+                            if columnas_huevos:
+                                # Crear un nuevo DataFrame solo con las columnas de huevos
+                                chart_data = pd.DataFrame(
+                                    {col: filtered_df[col].values for col in columnas_huevos if len(filtered_df[col]) > 0},
+                                    index=filtered_df['Fecha']
+                                )
+                                
+                                # Mostrar el gráfico si hay datos
+                                if not chart_data.empty:
+                                    st.line_chart(chart_data)
                 
                 # Exportar a CSV
                 csv = df_consulta.to_csv(index=False)
