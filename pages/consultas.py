@@ -30,7 +30,11 @@ if st.button('Consultar Datos'):
     try:
         # Utilizamos el enfoque del código original, pero adaptado a los campos avícolas
         # Definimos los campos que queremos consultar
-        fields = ["Lote", "Consumo_concentrado", "Mortalidad", "Total_huevos"]
+        fields = ["Lote", "Consumo_concentrado", "Mortalidad", "Total_huevos", 
+                "Huevos_yumbo", "Huevos_extra", "Huevos_aa", "Huevos_a", 
+                "Huevos_b", "Huevos_c", "Huevos_pipo", "Huevos_sucios", 
+                "Huevos_toteados", "Yemas", "Aves_descartadas_seleccion", 
+                "Aves_descartadas_venta", "Retiro_aves", "Consumo_por_ave"]
         
         # Crear diccionarios para almacenar datos y tiempos
         data = {field: [] for field in fields}
@@ -94,23 +98,96 @@ if st.button('Consultar Datos'):
                     # Mostrar resultados filtrados
                     if st.button('Filtrar por Lote'):
                         st.write("Datos filtrados por lote:")
-                        st.dataframe(filtered_df)
                         
-                        # Gráficos para datos numéricos
-                        numerical_cols = filtered_df.select_dtypes(include=['number']).columns
+                        # Crear pestañas para organizar la información
+                        tab1, tab2 = st.tabs(["Tabla de datos", "Estadísticas"])
                         
-                        for col in numerical_cols:
-                            if col != 'Lote' and len(filtered_df[col].dropna()) > 0:
-                                # Crear DataFrame temporal para gráfico
-                                df_chart = pd.DataFrame({
-                                    'Fecha': pd.to_datetime(filtered_df['Time_data']),
-                                    col: filtered_df[col]
-                                })
-                                df_chart = df_chart.set_index('Fecha')
+                        with tab1:
+                            st.dataframe(filtered_df)
+                        
+                        with tab2:
+                            # Mostrar estadísticas básicas para los datos numéricos
+                            numeric_cols = filtered_df.select_dtypes(include=['number']).columns
+                            if len(numeric_cols) > 0:
+                                st.write("Estadísticas del lote seleccionado:")
+                                st.dataframe(filtered_df[numeric_cols].describe())
+                        
+                        # Gráficos agrupados por categoría
+                        st.subheader(f"Gráficos para el lote: {lote_seleccionado}")
+                        
+                        # 1. Gráfico de producción de huevos
+                        huevos_cols = [col for col in ['Huevos_yumbo', 'Huevos_extra', 'Huevos_aa', 
+                                                    'Huevos_a', 'Huevos_b', 'Huevos_c', 
+                                                    'Huevos_pipo', 'Huevos_sucios', 
+                                                    'Huevos_toteados', 'Yemas', 'Total_huevos'] 
+                                    if col in filtered_df.columns]
+                        
+                        if huevos_cols:
+                            st.subheader("Producción de Huevos")
+                            df_huevos = pd.DataFrame({
+                                'Fecha': pd.to_datetime(filtered_df['Time_data'])
+                            })
+                            
+                            for col in huevos_cols:
+                                if len(filtered_df[col].dropna()) > 0:
+                                    df_huevos[col] = filtered_df[col]
+                            
+                            if len(df_huevos.columns) > 1:  # Si hay al menos una columna además de 'Fecha'
+                                df_huevos = df_huevos.set_index('Fecha')
+                                st.line_chart(df_huevos)
                                 
-                                # Mostrar gráfico
-                                st.subheader(f"Gráfico de {col}")
-                                st.line_chart(df_chart)
+                                # Tabla de resumen estadístico
+                                st.write("Resumen estadístico de producción de huevos:")
+                                st.dataframe(df_huevos.describe())
+                        
+                        # 2. Gráfico de mortalidad y descarte de aves
+                        aves_cols = [col for col in ['Mortalidad', 'Aves_descartadas_seleccion', 
+                                                  'Aves_descartadas_venta', 'Retiro_aves'] 
+                                  if col in filtered_df.columns]
+                        
+                        if aves_cols:
+                            st.subheader("Mortalidad y Descarte de Aves")
+                            df_aves = pd.DataFrame({
+                                'Fecha': pd.to_datetime(filtered_df['Time_data'])
+                            })
+                            
+                            for col in aves_cols:
+                                if len(filtered_df[col].dropna()) > 0:
+                                    df_aves[col] = filtered_df[col]
+                            
+                            if len(df_aves.columns) > 1:  # Si hay al menos una columna además de 'Fecha'
+                                df_aves = df_aves.set_index('Fecha')
+                                st.line_chart(df_aves)
+                        
+                        # 3. Gráfico de consumo
+                        consumo_cols = [col for col in ['Consumo_concentrado', 'Consumo_por_ave'] 
+                                     if col in filtered_df.columns]
+                        
+                        if consumo_cols:
+                            st.subheader("Consumo de Concentrado")
+                            df_consumo = pd.DataFrame({
+                                'Fecha': pd.to_datetime(filtered_df['Time_data'])
+                            })
+                            
+                            for col in consumo_cols:
+                                if len(filtered_df[col].dropna()) > 0:
+                                    df_consumo[col] = filtered_df[col]
+                            
+                            if len(df_consumo.columns) > 1:  # Si hay al menos una columna además de 'Fecha'
+                                df_consumo = df_consumo.set_index('Fecha')
+                                st.line_chart(df_consumo)
+                        
+                        # 4. Gráfico comparativo de producción vs consumo
+                        if 'Total_huevos' in filtered_df.columns and 'Consumo_concentrado' in filtered_df.columns:
+                            if len(filtered_df['Total_huevos'].dropna()) > 0 and len(filtered_df['Consumo_concentrado'].dropna()) > 0:
+                                st.subheader("Relación Producción vs Consumo")
+                                df_relacion = pd.DataFrame({
+                                    'Fecha': pd.to_datetime(filtered_df['Time_data']),
+                                    'Total Huevos': filtered_df['Total_huevos'],
+                                    'Consumo (kg)': filtered_df['Consumo_concentrado']
+                                })
+                                df_relacion = df_relacion.set_index('Fecha')
+                                st.line_chart(df_relacion)
                 
                 # Exportar a CSV
                 csv = df_result.to_csv(index=False)
@@ -130,4 +207,51 @@ else:
 
 # Añadir información adicional
 st.markdown("---")
+
+# Sección informativa con métricas clave
+st.subheader("Métricas Clave")
+try:
+    # Consulta para obtener las métricas más recientes
+    query_reciente = f'from(bucket: "{bucket}")' \
+                    f'|> range(start: -{tiempo_consulta}d)' \
+                    f'|> filter(fn: (r) => r._measurement == "Produccion_Avicola")' \
+                    f'|> filter(fn: (r) => r._field == "Total_huevos" or r._field == "Mortalidad" or r._field == "Consumo_concentrado")' \
+                    f'|> last()'
+    
+    tables_reciente = client_Inf.query_api().query(query_reciente, org)
+    
+    # Crear diccionario para almacenar los valores más recientes
+    metricas_recientes = {}
+    
+    for table in tables_reciente:
+        for record in table.records:
+            campo = record.get_field()
+            valor = record.get_value()
+            metricas_recientes[campo] = valor
+    
+    # Mostrar métricas en columnas
+    if metricas_recientes:
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if "Total_huevos" in metricas_recientes:
+                st.metric("Producción Total Reciente", f"{int(metricas_recientes['Total_huevos']):,} huevos")
+            else:
+                st.metric("Producción Total Reciente", "No disponible")
+        
+        with col2:
+            if "Mortalidad" in metricas_recientes:
+                st.metric("Mortalidad Reciente", f"{int(metricas_recientes['Mortalidad']):,} aves")
+            else:
+                st.metric("Mortalidad Reciente", "No disponible")
+        
+        with col3:
+            if "Consumo_concentrado" in metricas_recientes:
+                st.metric("Consumo Reciente", f"{metricas_recientes['Consumo_concentrado']:,.2f} kg")
+            else:
+                st.metric("Consumo Reciente", "No disponible")
+except Exception as e:
+    st.warning(f"No se pudieron cargar las métricas recientes: {e}")
+
 st.write("Esta aplicación consulta datos de producción avícola desde InfluxDB.")
+st.write("Para registrar nuevos datos, utilice la aplicación de registro correspondiente.")
