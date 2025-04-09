@@ -79,10 +79,10 @@ st.subheader("Observaciones")
 observaciones = st.text_area('Observaciones', height=100, key='observaciones')
 
 # Configuración de InfluxDB
-bucket = "Elec_var"
-org = "cmcorrea4@gmail.com"
-token = "VmIHuN_GB8AhmOchqnjtgrOL-oD2pHU-2ypKcswWbtM6aY1G2ylRYOJQpsqEANVl9iZ5PdAGqTsOJ30NPCtPUQ=="
-url = "https://eu-central-1-1.aws.cloud2.influxdata.com"
+bucket = "Incubadora1"
+org = "ohvelasquez@elpoli.edu.co"
+token = "AyLAup8JVuA74RZphxpJBfvj6xeela_BaO1Dy7sQT0jC7CRgoo1euhTJwqrze3NUrHcBIqCOjPd7aAmZgB00fQ=="
+url = "https://us-east-1-1.aws.cloud2.influxdata.com/"
 
 # Botón para registrar datos
 if st.button('Registrar Datos'):
