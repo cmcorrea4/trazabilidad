@@ -11,10 +11,10 @@ st.title("Sistema de Gestión Avícola")
 st.subheader("Consulta de Datos de Producción")
 
 # Configuración de InfluxDB
-token = "VmIHuN_GB8AhmOchqnjtgrOL-oD2pHU-2ypKcswWbtM6aY1G2ylRYOJQpsqEANVl9iZ5PdAGqTsOJ30NPCtPUQ=="
-org = "cmcorrea4@gmail.com"
-bucket = "Elec_var"
-url = "https://eu-central-1-1.aws.cloud2.influxdata.com"
+token = "AyLAup8JVuA74RZphxpJBfvj6xeela_BaO1Dy7sQT0jC7CRgoo1euhTJwqrze3NUrHcBIqCOjPd7aAmZgB00fQ=="
+org = "ohvelasquez@elpoli.edu.co"
+bucket = "Incubadora1"
+url = "https://us-east-1-1.aws.cloud2.influxdata.com/"
 
 # Crear cliente de InfluxDB
 client_Inf = InfluxDBClient(url=url, token=token, org=org, verify_ssl=False)
